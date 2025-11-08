@@ -1,21 +1,27 @@
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response
+from fastapi.middleware.cors import CORSMiddleware
 import httpx
 
 app = FastAPI()
+
+# Add global CORS support
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/api")
 async def proxy(url: str):
     try:
         async with httpx.AsyncClient() as client:
             resp = await client.get(url)
-        headers = dict(resp.headers)
-        # Ensure CORS header is added
-        headers["Access-Control-Allow-Origin"] = "*"
         return Response(
             content=resp.content,
             status_code=resp.status_code,
-            headers=headers,
             media_type=resp.headers.get("content-type")
         )
     except Exception as e:
